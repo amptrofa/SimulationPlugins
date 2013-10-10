@@ -100,8 +100,8 @@ namespace gazebo
 					AngleValue = this->RevolutionSpeedCal(JointWR,0);
 					// cout<<"The real rotation rate is "<<AngleValue<<" rad/s"<<endl;
 					CurrentPosition = GetModelCentralCoor();
-					cout<<"The Coordinates of the robot is: ["<<CurrentPosition.pos.x<<","<<CurrentPosition.pos.y<<","<<CurrentPosition.pos.z<<"];"<<endl;
-					cout<<"The direction of the robot is: ["<<CurrentPosition.rot.GetRoll()<<","<<CurrentPosition.rot.GetPitch()<<","<<CurrentPosition.rot.GetYaw()<<"];"<<endl;
+					// cout<<"The Coordinates of the robot is: ["<<CurrentPosition.pos.x<<","<<CurrentPosition.pos.y<<","<<CurrentPosition.pos.z<<"];"<<endl;
+					// cout<<"The direction of the robot is: ["<<CurrentPosition.rot.GetRoll()<<","<<CurrentPosition.rot.GetPitch()<<","<<CurrentPosition.rot.GetYaw()<<"];"<<endl;
 					// cout<<"The direction of the robot is: ["<<CurrentPosition.pos.x<<","<<CurrentPosition.pos.y<<","<<CurrentPosition.pos.z<<"];"<<endl;
 					//=========== Basic Controllers Need to Be Executed In Each Iteration ===========
 					// JointAngleControl();
@@ -232,7 +232,7 @@ namespace gazebo
 					double displacementX, displacementY, angleC;
 					displacementX = EndPoint.x - StartPoint.x;
 					displacementY = EndPoint.y - StartPoint.y;
-					cout<<"direction vector is [ " << displacementX << "," <<displacementY<<"]"<<endl;
+					// cout<<"direction vector is [ " << displacementX << "," <<displacementY<<"]"<<endl;
 					angleC = atan2(displacementY,displacementX);
 					math::Angle ReturnAngle(angleC+PI/2);
 					return ReturnAngle;
