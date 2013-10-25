@@ -24,14 +24,20 @@
 #include "sensors/DepthCameraSensor.hh"
 #include "sensors/CameraSensor.hh"
 #include "rendering/DepthCamera.hh"
+#include "physics/physics.hh"
 #include "gazebo.hh"
+
+#include "transport/transport.hh"
+#include "msgs/msgs.hh"
+#include "boost/algorithm/string/replace.hpp"
 
 namespace gazebo
 {
   class DepthCameraPlugin : public SensorPlugin
   {
     public: DepthCameraPlugin();
-
+    
+    private: std::string GetTopicName() const;
     public: void Load(sensors::SensorPtr _sensor, sdf::ElementPtr _sdf);
 
     public: virtual void OnNewDepthFrame(const float *_image,
@@ -52,6 +58,8 @@ namespace gazebo
 
     protected: sensors::DepthCameraSensorPtr parentSensor;
     protected: rendering::DepthCameraPtr depthCamera;
+    protected: transport::NodePtr node;
+    protected: transport::PublisherPtr depthMapPub;
 
     private: event::ConnectionPtr newDepthFrameConnection;
     private: event::ConnectionPtr newRGBPointCloudConnection;

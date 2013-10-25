@@ -18,8 +18,6 @@
  *
 */
 #include "DepthCameraCustom.hh"
-#include "iostream"
-#include "fstream"
 
 using namespace gazebo;
 GZ_REGISTER_SENSOR_PLUGIN(DepthCameraPlugin)
@@ -29,6 +27,16 @@ DepthCameraPlugin::DepthCameraPlugin() : SensorPlugin()
 {
 }
 
+std::string DepthCameraPlugin::GetTopicName() const
+{
+  std::string topicName = "~/";
+  topicName += this->parentSensor->GetParentName() + "/" +
+    this->parentSensor->GetName() + "/image";
+  boost::replace_all(topicName, "::", "/");
+
+  return topicName;
+}
+
 /////////////////////////////////////////////////
 void DepthCameraPlugin::Load(sensors::SensorPtr _sensor,
                               sdf::ElementPtr /*_sdf*/)
@@ -36,6 +44,11 @@ void DepthCameraPlugin::Load(sensors::SensorPtr _sensor,
   this->parentSensor =
     boost::shared_dynamic_cast<sensors::DepthCameraSensor>(_sensor);
   this->depthCamera = this->parentSensor->GetDepthCamera();
+  
+  // Add image publisher - publishes gztopic containing depth map
+  this->node = transport::NodePtr(new transport::Node());
+  this->depthMapPub = 
+    this->node->Advertise<msgs::ImageStamped>(this->GetTopicName(), 50);
 
   if (!this->parentSensor)
   {
@@ -69,7 +82,6 @@ void DepthCameraPlugin::OnNewDepthFrame(const float *_image,
     unsigned int _depth, const std::string &_format)
 {
   float min, max;
-  unsigned char * charImg;
   min = 1000;
   max = 0;
   for (unsigned int i = 0; i < _width * _height; i++)
@@ -80,21 +92,43 @@ void DepthCameraPlugin::OnNewDepthFrame(const float *_image,
       min = _image[i];
   }
 
-  int index =  ((_height * 0.5) * _width) + _width * 0.5;
-  printf("W[%d] H[%d] MidPoint[%d] Dist[%f] Min[%f] Max[%f]\n",
-      width, height, index, _image[index], min, max);
+  //int index =  ((_height * 0.5) * _width) + _width * 0.5;
+  //printf("W[%d] H[%d] MidPoint[%d] Dist[%f] Min[%f] Max[%f]\n",
+  //    width, height, index, _image[index], min, max);
 
   // Convert float _image to char charImg
+  unsigned char * charImg;
   charImg = (unsigned char*) malloc (_width*_height);
   for (unsigned int i = 0; i < _width*_height; i++)
   {
     charImg[i] = (char) ((_image[i]-min)*(255.0/(max-min)));
   }
-
+  
   rendering::Camera::SaveFrame(charImg, _width,
    _height, _depth, std::string("L8"), std::string("/tmp/depthCamera/sample.jpg"));
+  //TODO: File must exist, or the program crashes. Need to fix.
   free (charImg);
-  
+
+  unsigned int float_depth = sizeof(_image[0]);
+  // Construct the ImageStamped message and publish it
+  if (this->depthMapPub->HasConnections())
+  {
+    msgs::ImageStamped msg;
+    //physics::WorldPtr world = physics::get_world (this->parentSensor->GetWorldName());
+    msgs::Set(msg.mutable_time(), physics::get_world (
+      this->parentSensor->GetWorldName())->GetSimTime());
+    msg.mutable_image()->set_width(_width);
+    msg.mutable_image()->set_height(_height);
+    msg.mutable_image()->set_pixel_format(common::Image::ConvertPixelFormat(
+      std::string("R_FLOAT32")));
+    msg.mutable_image()->set_step(_width*float_depth);
+    msg.mutable_image()->set_data(_image, _width*_height*float_depth);
+    
+    if (this->depthMapPub && this->depthMapPub->HasConnections())
+    {
+      this->depthMapPub->Publish(msg);
+    }
+  }
 }
 
 /////////////////////////////////////////////////
