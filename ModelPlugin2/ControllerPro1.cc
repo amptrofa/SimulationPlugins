@@ -52,8 +52,30 @@ namespace gazebo
 				}
 		public: void Load (physics::ModelPtr _parent, sdf::ElementPtr _sdf)
 				{
+					string modelName = _parent->GetName();
+					
+					string nextElementName = _sdf->GetNextElement()->Get<string>("name");
+					// Remove the name of the next element to get its scope within the model
+					unsigned lastScope = nextElementName.find_last_of("::");
+					if (lastScope == string::npos)
+					{	// string "::" was not actually found in nextElementName
+						this->withinModelPrefix = "";
+						this->scopedPrefix = modelName + "::";
+					} else {
+						this->withinModelPrefix = nextElementName.substr(0,lastScope-1) + "::";
+						this->scopedPrefix = modelName + "::" + nextElementName.substr(0,lastScope-1);
+					}
+					
+					/*
+					string pluginName = _sdf->Get<string>("name");
+					cout << "The plugin itself is called: " << pluginName << endl;
+					_sdf->SetName(this->scopedPrefix + "::" + pluginName); // this line doesn't seem to be working. at all :(
+					cout << "But we just changed it's name to: " << _sdf->Get<string>("name") << endl;
+					*/
+										
 					// Initialize the whole system
 					SystemInitialization(_parent);
+										
 					// ************************************************************************************
 					gazebo::transport::NodePtr node(new gazebo::transport::Node());
   					node->Init();
@@ -94,10 +116,10 @@ namespace gazebo
 				{
 					// Get all the pointers point to right objects
 					this->model = parentModel;
-					this->JointWR = model->GetJoint("Right_wheel_hinge");
-					this->JointWL = model->GetJoint("Left_wheel_hinge");
-					this->JointWF = model->GetJoint("Front_wheel_hinge");
-					this->JointCB = model->GetJoint("Center_hinge");
+					this->JointWR = model->GetJoint(this->withinModelPrefix + "Right_wheel_hinge");
+					this->JointWL = model->GetJoint(this->withinModelPrefix + "Left_wheel_hinge");
+					this->JointWF = model->GetJoint(this->withinModelPrefix + "Front_wheel_hinge");
+					this->JointCB = model->GetJoint(this->withinModelPrefix + "Center_hinge");
 					JointWRP.JointX = JointWR;
 					JointWRP.Need2BeSet = false;
 					JointWRP.JointErrorHis = 0;
@@ -142,17 +164,17 @@ namespace gazebo
 				{
 					gazebo::transport::NodePtr node1(new gazebo::transport::Node());
 					// Initialize the node with the model name
-					node1->Init(model->GetName());
-					cout<<"Mode: node name is '"<<model->GetName()<<"'"<<endl;
-					string TopicName = "~/" + model->GetName() + "::FrontWheel::front_contact";
+					node1->Init(this->scopedPrefix);
+					cout<<"Mode: node name is '"<< this->scopedPrefix.substr(0,this->scopedPrefix.length()-2) <<"'"<<endl;
+					string TopicName = "~/" + this->scopedPrefix + "FrontWheel::front_contact";
 					cout<<"Mode: node topic is '"<<TopicName<<"'"<<endl;
 					this->LinkCollisonSub[0] = node1->Subscribe(TopicName,&ModelController::CollisionReceiverProcessor,this);
-					TopicName = "~/" + model->GetName() + "::UHolderBody::UHolder_contact";
+					TopicName = "~/" + this->scopedPrefix + "UHolderBody::UHolder_contact";
 					cout<<"Mode: node topic is '"<<TopicName<<"'"<<endl;
 					this->LinkCollisonSub[1] = node1->Subscribe(TopicName,&ModelController::CollisionReceiverProcessor,this);
-					TopicName = "~/" + model->GetName() + "::LeftWheel::LeftWheel_contact";
+					TopicName = "~/" + this->scopedPrefix + "LeftWheel::LeftWheel_contact";
 					this->LinkCollisonSub[2] = node1->Subscribe(TopicName,&ModelController::CollisionReceiverProcessor,this);
-					TopicName = "~/" + model->GetName() + "::RightWheel::RightWheel_contact";
+					TopicName = "~/" + this->scopedPrefix + "RightWheel::RightWheel_contact";
 					this->LinkCollisonSub[3] = node1->Subscribe(TopicName,&ModelController::CollisionReceiverProcessor,this);
 
 					string ColPubName = "~/"+model->GetName()+"_Collision";
@@ -338,10 +360,15 @@ namespace gazebo
 		// Need to be virtual in the furture
 		public: math::Pose GetModelCentralCoor(void)
 				{
-					math::Pose ModelPosition;
-					physics::ModelState CurrentModelState(model);
-					ModelPosition = CurrentModelState.GetPose();
-					return ModelPosition;
+					math::Pose smorePose_in0;					
+					
+					math::Pose LinkPose_in0 = model->GetLink(this->withinModelPrefix + "CircuitHolder")->GetWorldPose();
+					
+					math::Pose LinkPose_inSMORE = math::Pose(0.0, 0.0, 0.05, 0.0, 0.0, 0.0); // Transformation from SMORE to link
+					math::Pose smorePose_inLink = -LinkPose_inSMORE; // Transformation from link to SMORE
+					
+					smorePose_in0 = LinkPose_in0 + smorePose_inLink;
+					return smorePose_in0;
 				}
 		// This function is an old version function of RevolutionSpeedCal()
 		// Which has the same functionality as RevolutionSpeedCal()
@@ -479,6 +506,8 @@ namespace gazebo
 
 		// Current Model Pointer
 		private: physics::ModelPtr model;
+		private: string scopedPrefix;
+		private: string withinModelPrefix;
 		// Pointers to all the Joints the current model has
 		private: physics::JointPtr JointWR;
 		private: physics::JointPtr JointWL;
