@@ -6,6 +6,7 @@
 #include <cmath>
 
 #include "collision_message_plus.pb.h"
+#include "SMORES.hh"
 using namespace std;
 
 #define PI 3.1415926 
@@ -65,6 +66,8 @@ namespace gazebo
 						this->withinModelPrefix = nextElementName.substr(0,lastScope-1) + "::";
 						this->scopedPrefix = modelName + "::" + nextElementName.substr(0,lastScope-1);
 					}
+					
+          SMORES::SMORESModulePtr module = SMORES::SMORESModulePtr(new SMORES::SMORESModule);
 					
 					/*
 					string pluginName = _sdf->Get<string>("name");
