@@ -1,6 +1,35 @@
 #include <SMORES.hh>
 
 using namespace gazebo;
+
+std::string SMORES::util::ColonToSlash(const std::string &str)
+{
+  std::string replacedStr = str;
+  unsigned colonPosition = replacedStr.find("::");
+  // loop through, replacing the colon each time it is found
+  while (colonPosition != std::string::npos)
+  {
+    replacedStr.replace(colonPosition,2,"/");
+    colonPosition = replacedStr.find("::");
+  };
+  
+  return replacedStr;
+}
+
+std::string SMORES::util::StripLastScope(const std::string &str)
+{
+  unsigned lastScope = str.rfind("::");
+  std::string strippedStr = str.substr(0,lastScope);
+  return strippedStr;  
+}
+
+std::string SMORES::util::GetLastScope(const std::string &str)
+{
+  unsigned lastScope = str.rfind("::");
+  std::string theLastScope = str.substr(lastScope+2);
+  return theLastScope;
+}
+
 using namespace SMORES;
 
 SMORESModule::SMORESModule()
@@ -39,6 +68,15 @@ void SMORESModule::SetJoints(physics::JointPtr right, physics::JointPtr left, ph
   this->leftWheelHinge = left;
   this->frontWheelHinge = front;
   this->centerHinge = center;
+}
+
+Port SMORESModule::ConvertPort(const std::string &str)
+{
+  for (unsigned int i = 0; i < PORT_COUNT; ++ i)
+    if (PortCollisionNames[i] == str)
+      return static_cast<Port>(i);
+  
+  return UKNOWN_PORT;
 }
 
 void SMORESModule::Connect(Port thisModulePort, SMORESModule moduleConnecting, Port connectingModulePort)
@@ -81,7 +119,7 @@ SMORESModulePtr SMORESManager::GetModuleByName(const std::string &name)
   }
   
   // No module with name==name found
-  SMORESModulePtr nothing(new SMORESModule);
+  SMORESModulePtr nothing;
   return nothing;
 }
 

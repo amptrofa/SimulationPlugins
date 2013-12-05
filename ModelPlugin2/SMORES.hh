@@ -14,13 +14,39 @@ namespace gazebo
   namespace SMORES
   {
     
+    namespace util
+    {
+      /// \brief Replace :: with / in a string. Used for name scoping
+      /// \param[in] str The string to perform the replacement on
+      std::string ColonToSlash(const std::string &str);
+        
+      /// \brief Strip the final scope off of a string - remove everything after the last "::"
+      /// \param[in] str The string to strip the scope from
+      std::string StripLastScope(const std::string &str);
+      
+      /// \brief Get final scope of a string - only what is after the last "::"
+      /// \param[in] str The string to get the scope from
+      std::string GetLastScope(const std::string &str);
+    }
+    
+    /// \brief Docking port collision name enumeration
+    enum PortCollisionNames
+    {
+      "front_contact",
+      "UHolder_contact",
+      "LeftWheel_contact",
+      "RightWheel_contact"
+    }
+    
     /// \brief Docking port enumeration
     enum Port
     {
       FRONT,
       RIGHT,
       LEFT,
-      REAR
+      REAR,
+      PORT_COUNT,
+      UNKNOWN_PORT
     };
     
     class SMORESModule : public boost::enable_shared_from_this<SMORESModule>
@@ -51,6 +77,10 @@ namespace gazebo
       /// \param[in] front The joint connecting the front wheel
       /// \param[in] center The joint connecting the two halves of the body, forming the center hinge
       public: void SetJoints(physics::JointPtr right, physics::JointPtr left, physics::JointPtr front, physics::JointPtr center);
+      
+      /// \brief Convert a contact name to a SMORES::Port
+      /// \param[in] str A string containing the contact name
+      public: static SMORES::Port ConvertPort(const std::string &str);
       
       /// \brief Connect two modules together
       /// \param[in] thisModulePort Port of this module to connect

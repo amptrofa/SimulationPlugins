@@ -4,8 +4,8 @@ import "pose.proto";
 
 message CollisionMessage
 {
-	required string collision1 = 1;
-	required string collision2 = 2;
-	required gazebo.msgs.Pose PositionCol1 = 3;
-	optional gazebo.msgs.Pose PositionCol2 = 4;
+	required string collisionSMORE1 = 1;
+	required string collisionSMORE2 = 2;
+	required int32 Port1 = 3;
+	required int32 Port2 = 4;
 }
