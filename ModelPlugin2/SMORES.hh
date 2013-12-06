@@ -32,21 +32,21 @@ namespace gazebo
     /// \brief Docking port collision name enumeration
     static std::string PortCollisionNames[] =
     {
-      "front_contact",
-      "UHolder_contact",
-      "LeftWheel_contact",
-      "RightWheel_contact"
+      "FrontWheel_collision",
+      "UHolder_collision",
+      "LeftWheel_collision",
+      "RightWheel_collision"
     };
     
     class SMORESModule
     {
       /// \brief Docking port enumeration
-      enum Port
+      public: enum Port
       {
         FRONT,
-        RIGHT,
-        LEFT,
         REAR,
+        LEFT,
+        RIGHT,
         PORT_COUNT,
         UNKNOWN_PORT
       };
@@ -81,17 +81,6 @@ namespace gazebo
       /// \brief Convert a contact name to a SMORES::Port
       /// \param[in] str A string containing the contact name
       public: static Port ConvertPort(const std::string &str);
-      
-      /// \brief Connect two modules together
-      /// \param[in] thisModulePort Port of this module to connect
-      /// \param[in] moduleConnecting Module to connect this module to
-      /// \param[in] connectingModulePort Port of the module this one is being connected to to connect
-      public: void Connect(Port thisModulePort, SMORESModule moduleConnecting, Port connectingModulePort);
-      
-      /// \brief Disconnect this module from another module
-      /// \param[in] disconnectPort Port of this module to disconnect
-      /// TODO: disconnection is not yet supported
-      public: void Disconnect(Port disconnectPort);
       
       /// \brief Get the module pose
       public: math::Pose GetPose();
@@ -144,6 +133,17 @@ namespace gazebo
       /// \brief Get all module pointers
       /// \param[out] moduleList The list of SMORESModulePtrs will be written here
       public: void GetModulePtrs(std::list<SMORESModulePtr> modulePtrs);
+
+      /// \brief Connect two modules together
+      /// \param[in] thisModulePort Port of this module to connect
+      /// \param[in] moduleConnecting Module to connect this module to
+      /// \param[in] connectingModulePort Port of the module this one is being connected to to connect
+      public: static void Connect(SMORESModulePtr module1, SMORESModule::Port port1, SMORESModulePtr module2, SMORESModule::Port port2);
+      
+      /// \brief Disconnect this module from another module
+      /// \param[in] disconnectPort Port of this module to disconnect
+      /// TODO: disconnection is not yet supported
+      public: static void Disconnect(SMORESModule::Port disconnectPort);
 
       private: std::vector<SMORESModulePtr> modules;
 

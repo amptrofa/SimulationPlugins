@@ -184,11 +184,21 @@ namespace gazebo
 						
 						// short circuit will prevent us from searching for SMORES module most of the time
 						if ( (coll1ModelName.find("ground_plane") == string::npos) &&
-					       (coll2ModelName.find("ground_plane") == string::npos) && 
-					       (SMORES::SMORESManager::Instance()->GetModuleByName(coll1ModelName)) &&
-					       (SMORES::SMORESManager::Instance()->GetModuleByName(coll2ModelName)) )
-					  {
-					  	cout << coll1ModelName << " collided with " << coll2ModelName << "(this is [" << this->scopedPrefix << "])" << endl;
+								 (coll2ModelName.find("ground_plane") == string::npos) && 
+								 (SMORES::SMORESManager::Instance()->GetModuleByName(coll1ModelName)) &&
+								 (SMORES::SMORESManager::Instance()->GetModuleByName(coll2ModelName)) )
+						{
+							cout << coll1ModelName << " collided with " << coll2ModelName << "(this is [" << this->scopedPrefix << "])" << endl;
+
+							SMORES::SMORESModulePtr module1 = SMORES::SMORESManager::Instance()->GetModuleByName(coll1ModelName);
+							SMORES::SMORESModule::Port port1 = static_cast<SMORES::SMORESModule::Port>(
+								SMORES::SMORESModule::ConvertPort(SMORES::util::GetLastScope(msg->contact(i).collision1())));
+						
+							SMORES::SMORESModulePtr module2 = SMORES::SMORESManager::Instance()->GetModuleByName(coll2ModelName);
+							SMORES::SMORESModule::Port port2 = static_cast<SMORES::SMORESModule::Port>(
+								SMORES::SMORESModule::ConvertPort(SMORES::util::GetLastScope(msg->contact(i).collision2())));
+							
+							SMORES::SMORESManager::Connect(module1,port1,module2,port2);
 						}
 					}
 				}

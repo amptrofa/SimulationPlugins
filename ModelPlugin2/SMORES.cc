@@ -87,18 +87,6 @@ SMORESModule::Port SMORESModule::ConvertPort(const std::string &str)
   return UNKNOWN_PORT;
 }
 
-void SMORESModule::Connect(Port thisModulePort, SMORESModule moduleConnecting, Port connectingModulePort)
-{
-  //TODO: set up connection in node graph
-  //TODO: move the module so that the connection is made
-  //TODO: create a rigid dynamic joint
-}
-
-void SMORESModule::Disconnect(Port disconnectPort)
-{
-  //TODO
-}
-
 math::Pose SMORESModule::GetPose()
 {
   math::Pose modulePose;
@@ -164,4 +152,18 @@ void SMORESManager::GetModulePtrs(std::list<SMORESModulePtr> modulePtrs)
   {
     modulePtrs.push_back(*iter);
   }
+}
+
+void SMORESManager::Connect(SMORESModulePtr module1, SMORESModule::Port port1, SMORESModulePtr module2, SMORESModule::Port port2)
+{
+  std::cout << "Connecting " << module1->GetName() << "::" << PortCollisionNames[port1] << " to " << module2->GetName() << "::" << PortCollisionNames[port2] << std::endl;
+  
+  //TODO: set up connection in node graph
+  //TODO: move the module so that the connection is made
+  //TODO: create a rigid dynamic joint
+}
+
+void SMORESManager::Disconnect(SMORESModule::Port disconnectPort)
+{
+  //TODO
 }
