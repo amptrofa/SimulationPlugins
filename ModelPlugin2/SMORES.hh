@@ -30,27 +30,27 @@ namespace gazebo
     }
     
     /// \brief Docking port collision name enumeration
-    enum PortCollisionNames
+    static std::string PortCollisionNames[] =
     {
       "front_contact",
       "UHolder_contact",
       "LeftWheel_contact",
       "RightWheel_contact"
-    }
-    
-    /// \brief Docking port enumeration
-    enum Port
-    {
-      FRONT,
-      RIGHT,
-      LEFT,
-      REAR,
-      PORT_COUNT,
-      UNKNOWN_PORT
     };
     
-    class SMORESModule : public boost::enable_shared_from_this<SMORESModule>
+    class SMORESModule
     {
+      /// \brief Docking port enumeration
+      enum Port
+      {
+        FRONT,
+        RIGHT,
+        LEFT,
+        REAR,
+        PORT_COUNT,
+        UNKNOWN_PORT
+      };
+    
       /// \brief constructor
       public: SMORESModule();
       /// \brief destructor
@@ -80,7 +80,7 @@ namespace gazebo
       
       /// \brief Convert a contact name to a SMORES::Port
       /// \param[in] str A string containing the contact name
-      public: static SMORES::Port ConvertPort(const std::string &str);
+      public: static Port ConvertPort(const std::string &str);
       
       /// \brief Connect two modules together
       /// \param[in] thisModulePort Port of this module to connect

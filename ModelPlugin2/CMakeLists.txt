@@ -9,12 +9,9 @@ if (PKG_CONFIG_FOUND)
 endif()
 include_directories(
 	${GAZEBO_INCLUDE_DIRS}
-	${CMAKE_CURRENT_BINARY_DIR}/msgs
 	${CMAKE_CURRENT_SOURCE_DIR}
 	)
-link_directories(${GAZEBO_LIBRARY_DIRS} ${CMAKE_CURRENT_BINARY_DIR}/msgs ${CMAKE_CURRENT_SOURCE_DIR})
-add_subdirectory(msgs)
+link_directories(${GAZEBO_LIBRARY_DIRS} ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_library(ControllerPro1 SHARED ControllerPro1.cc SMORES.cc)
-target_link_libraries(ControllerPro1 collision_message_plus ${GAZEBO_libraries} ${Boost_LIBRARIES})
-add_dependencies(ControllerPro1 collision_message_plus)
+target_link_libraries(ControllerPro1 ${GAZEBO_libraries} ${Boost_LIBRARIES})

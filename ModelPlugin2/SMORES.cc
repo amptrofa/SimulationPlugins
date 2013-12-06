@@ -2,6 +2,10 @@
 
 using namespace gazebo;
 
+/******************************************************************************
+/ SMORES::util
+******************************************************************************/
+
 std::string SMORES::util::ColonToSlash(const std::string &str)
 {
   std::string replacedStr = str;
@@ -31,6 +35,10 @@ std::string SMORES::util::GetLastScope(const std::string &str)
 }
 
 using namespace SMORES;
+
+/******************************************************************************
+/ SMORESModule
+******************************************************************************/
 
 SMORESModule::SMORESModule()
 {
@@ -70,13 +78,13 @@ void SMORESModule::SetJoints(physics::JointPtr right, physics::JointPtr left, ph
   this->centerHinge = center;
 }
 
-Port SMORESModule::ConvertPort(const std::string &str)
+SMORESModule::Port SMORESModule::ConvertPort(const std::string &str)
 {
   for (unsigned int i = 0; i < PORT_COUNT; ++ i)
     if (PortCollisionNames[i] == str)
       return static_cast<Port>(i);
   
-  return UKNOWN_PORT;
+  return UNKNOWN_PORT;
 }
 
 void SMORESModule::Connect(Port thisModulePort, SMORESModule moduleConnecting, Port connectingModulePort)
@@ -122,6 +130,10 @@ SMORESModulePtr SMORESManager::GetModuleByName(const std::string &name)
   SMORESModulePtr nothing;
   return nothing;
 }
+
+/******************************************************************************
+/ SMORESManager
+******************************************************************************/
 
 void SMORESManager::AddModule(SMORESModulePtr modulePtr)
 {

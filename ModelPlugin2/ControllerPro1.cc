@@ -5,7 +5,6 @@
 #include <iostream>
 #include <cmath>
 
-#include "collision_message_plus.pb.h"
 #include "SMORES.hh"
 using namespace std;
 
@@ -103,27 +102,6 @@ namespace gazebo
 					this->updateConnection = event::Events::ConnectWorldUpdateBegin(boost::bind(&ModelController::OnSystemRunning, this, _1));
 				}
 				//########################################################
-		public: void welcomInfoProcessor(GzStringPtr &msg)
-				{
-					cout<<"Message Recieved"<<endl;
-					cout<<"Message: "<<msg->data()<<endl;
-					string InfoReceived = msg->data();
-					if(InfoReceived.find('3') != string::npos)
-					{
-						Driving2Angle.SetFromRadian(2.3561945);
-						Driving2Point.Set(1,1);
-						Location.Set(0.929,0.929,0.05);
-						Rotmat.SetFromAxis(0,0,1,2.3561945);
-
-						math::Angle AngleInterested(0.5235987);
-						this->JointWF->SetAngle(0,AngleInterested);
-
-						Need2BeSet = 0;
-
-						isModel3 = 1;
-					}
-				}
-				//########################################################
 		private: void SystemInitialization(physics::ModelPtr parentModel)
 				{
 					// Get all the pointers point to right objects
@@ -170,9 +148,9 @@ namespace gazebo
 					// gazebo::transport::NodePtr node(new gazebo::transport::Node());
 					// 		node->Init();
 					// 		this->PositionSub = node->Subscribe(TopicName,&ModelController::PositionDecoding, this);
-					CollisionPubAndSubInitialization();
+					CollisionSubInitialization();
 				}
-		private: void CollisionPubAndSubInitialization(void)
+		private: void CollisionSubInitialization(void)
 				{
 					gazebo::transport::NodePtr node1(new gazebo::transport::Node());
 
@@ -195,10 +173,6 @@ namespace gazebo
 					TopicName = "~/" + topicPrefix + "RightWheel/RightWheel_contact";
 					//cout<<"Mode: contact topic is '"<<TopicName<<"'"<<endl;
 					this->LinkCollisonSub[3] = node1->Subscribe(TopicName,&ModelController::CollisionReceiverProcessor,this);
-
-					string ColPubName = "~/" + topicPrefix + "Collision";
-					//cout<<"Mode: collision topic is '"<<ColPubName<<"'"<<endl;
-					CollisionInfoToServer = node1->Advertise<collision_message_plus::msgs::CollisionMessage>(ColPubName);
 				}
 		private: void CollisionReceiverProcessor(ConstContactsPtr &msg)
 				{
@@ -214,56 +188,9 @@ namespace gazebo
 					       (SMORES::SMORESManager::Instance()->GetModuleByName(coll1ModelName)) &&
 					       (SMORES::SMORESManager::Instance()->GetModuleByName(coll2ModelName)) )
 					  {
-					  	//cout << coll1ModelName << " collided with " << coll2ModelName << "(this is [" << this->scopedPrefix << "])" << endl;
-					  	
-					  	collision_message_plus::msgs::CollisionMessage msgPlus;
-							
-							// Add collision names to the message
-							msgPlus.set_collision1(msg->contact(i).collision1());
-							msgPlus.set_collision2(msg->contact(i).collision2());
-							
-							// Determine which docking Ports collided
-							string collName1 = SMORES::util::GetLastScope(msg->contact(i).collision1());
-							SMORES::Port port1 = SMORES::ConvertPort(collName1);
-							msgPlus.set_Port1 = port1;
-														
-							string collName2 = SMORES::util::GetLastScope(msg->contact(i).collision2());
-							SMORES::Port port2 = SMORES::ConvertPort(collName2);
-							msgPlus.set_Port2 = port2;
-							
-							CollisionInfoToServer->Publish(msgPlus);
-							
-							break; // I'm not sure if we should break after the first one
+					  	cout << coll1ModelName << " collided with " << coll2ModelName << "(this is [" << this->scopedPrefix << "])" << endl;
 						}
 					}
-					/*
-					// cout<<"Message: "<<msg->data()<<endl;
-					string MsgsInfo = msg->data();
-					string Collison1 = MsgsInfo.substr(0,MsgsInfo.find(","));
-					string Collison2 = MsgsInfo.substr(MsgsInfo.find(",")+1,-1);
-					// cout<<"Model: Collision 1: "<<Collison1<<endl;
-					// cout<<"Model: Collision 2: "<<Collison2<<endl;
-					collision_message_plus::msgs::CollisionMessage CollisionMsgsPush;
-
-					string LinkName;
-					// cout<<"Model: Information came from model: "<<model->GetName()<<endl;
-					if(Collison1.substr(0,Collison1.find("::")).compare(model->GetName())==0)
-					{
-						// cout<<"Model: Collision 1 position "
-						CollisionMsgsPush.set_collision1(Collison1);
-						CollisionMsgsPush.set_collision2(Collison2);
-						LinkName = Collison1.substr((model->GetName()).length()+2,Collison1.find(":",(model->GetName()).length()+2)-2-(model->GetName()).length());
-					}else{
-						CollisionMsgsPush.set_collision1(Collison2);
-						CollisionMsgsPush.set_collision2(Collison1);
-						LinkName = Collison2.substr((model->GetName()).length()+2,Collison2.find(":",(model->GetName()).length()+2)-2-(model->GetName()).length());
-					}
-					// cout<<"Model: The collision link name is :"<<LinkName<<endl;
-					msgs::Pose PositionOfCollisionLink = msgs::Convert(model->GetLink(LinkName)->GetWorldPose());
-					CollisionMsgsPush.mutable_positioncol1()->CopyFrom(PositionOfCollisionLink);
-
-					CollisionInfoToServer->Publish(CollisionMsgsPush);
-					*/
 				}
 		// Position Command Decoding Function
 		private: void PositionDecoding(PosePtr &msg)
@@ -582,7 +509,9 @@ namespace gazebo
 			
 			SMORES::SMORESManager::Instance()->AddModule(this->module);
 		}
-
+		
+		private: SMORES::SMORESModulePtr module;
+		
 		// Current Model Pointer
 		private: physics::ModelPtr model;
 		private: string scopedPrefix;
@@ -621,9 +550,6 @@ namespace gazebo
 		private: int Need2BeSet;
 		private: physics::JointPtr DynamicJoint;
 		private: int isModel3;
-		
-		private: SMORES::SMORESModulePtr module;
-
 		//####################################################################
 	};
 
