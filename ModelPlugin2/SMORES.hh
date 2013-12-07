@@ -38,7 +38,7 @@ namespace gazebo
     static std::string PortCollisionNames[] =
     {
       "FrontWheel_collision",
-      "UHolder_collision",
+      "UHolderBody_collision",
       "LeftWheel_collision",
       "RightWheel_collision"
     };

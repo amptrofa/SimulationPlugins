@@ -99,19 +99,20 @@ SMORESModule::Port SMORESModule::ConvertPort(const std::string &str)
 
 physics::LinkPtr SMORESModule::GetPortLink(SMORESModule::Port port)
 {
-  std::string portCollisionName = PortCollisionNames[port];
-  if (portCollisionName.compare("FrontWheel_collision") == 0)
-    return this->frontWheelLink;
-  else if (portCollisionName.compare("UHolder_collision") == 0)
-    return this->uHolderBodyLink;
-  else if (portCollisionName.compare("LeftWheel_collision") == 0)
-    return this->leftWheelLink;
-  else if (portCollisionName.compare("RightWheel_collision") == 0)
-    return this->rightWheelLink;
-  else
+  switch (port)
   {
-    physics::LinkPtr nothing;
-    return nothing;
+    case SMORESModule::FRONT:
+      return this->frontWheelLink;
+    case SMORESModule::REAR:
+      return this->uHolderBodyLink;
+    case SMORESModule::LEFT:
+      return this->leftWheelLink;
+    case SMORESModule::RIGHT:
+      return this->rightWheelLink;
+    default:
+      gzwarn << "Link could not be found for SMORESModule::Port[" << port << "]" << std::endl;
+      physics::LinkPtr nothing;
+      return nothing;
   }
 }
 
