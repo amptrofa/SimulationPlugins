@@ -144,7 +144,7 @@ void SMORESModule::SetPose(math::Pose poseTo)
   this->uHolderBodyLink->SetWorldPose(linkNewPose);
   
   // Front Wheel link
-  std::cout << std::endl;
+  //std::cout << std::endl;
   //std::cout << "orgFrontWheelPose[" << this->frontWheelLink->GetWorldPose() << "]" << std::endl;  
   linkRelPose = this->frontWheelLink->GetWorldPose() - poseFrom;
   linkNewPose = linkRelPose * poseTo;
@@ -160,28 +160,6 @@ void SMORESModule::SetPose(math::Pose poseTo)
   linkRelPose = this->rightWheelLink->GetWorldPose() - poseFrom;
   linkNewPose = linkRelPose * poseTo;
   this->rightWheelLink->SetWorldPose(linkNewPose);
-  
-  //TODO: recursively move all connected modules to maintain alignment? This might not be necessary
-  
-  /* Old version, did not work
-  //TODO: Once the links are changed to being in a list, this should be turned into a loop
-  math::Pose poseFrom = this->GetPose();
-  std::cout << "modulePoseNow[" << poseFrom << "]" << std::endl;
-  math::Pose poseChange = poseTo-poseFrom;
-  
-  std::cout << "poseChange[" << poseChange << "]" << std::endl;
-  
-  this->circuitHolderLink->SetWorldPose(this->circuitHolderLink->GetWorldPose() + poseChange);
-  this->uHolderBodyLink->SetWorldPose(this->uHolderBodyLink->GetWorldPose() + poseChange);
-  this->frontWheelLink->SetWorldPose(this->frontWheelLink->GetWorldPose() + poseChange);
-  
-  std::cout << "newFrontWheelPose[" << this->frontWheelLink->GetWorldPose() + poseChange << "]" << std::endl;
-  
-  this->leftWheelLink->SetWorldPose(this->leftWheelLink->GetWorldPose() + poseChange);
-  this->rightWheelLink->SetWorldPose(this->rightWheelLink->GetWorldPose() + poseChange);
-  
-  //TODO: recursively move all connected modules to maintain alignment? This might not be necessary
-  */
 }
 
 void SMORESModule::SetLinkPose(math::Pose poseTo, const physics::LinkPtr specifiedLink)
@@ -286,36 +264,9 @@ void SMORESManager::Connect(SMORESModulePtr module1, SMORESModule::Port port1, S
     // if (namesOfPendingRequest.at(i).compare(nameString1) ==0 || namesOfPendingRequest.at(i).compare(nameString2) ==0)
     if (namesOfPendingRequest.at(i).compare(nameString1) ==0)
     {
-      int InAConnectionGroup = 0;
+
       std::cout<<"World: First model is: "<<ModelOfCollision1<<std::endl;
-      for (unsigned int m = 0; m < existConnectionGroups.size(); ++m)
-      {
-        if (existConnectionGroups.at(m).find(ModelOfCollision1)!=std::string::npos)
-        {
-          InAConnectionGroup = 1;
-          break;
-        }
-      }
-      if (InAConnectionGroup != 1)
-      {
-        std::string tmpString = ModelOfCollision1;
-        ModelOfCollision1 = ModelOfCollision2;
-        ModelOfCollision2 = tmpString;
-        
-        tmpString = LinkOfCollision1;
-        LinkOfCollision1 = LinkOfCollision2;
-        LinkOfCollision2 = tmpString;
-        
-        math::Pose tmpPose = ContactLinkPos;
-        ContactLinkPos = PendingRequestPos.at(i);
-        PendingRequestPos.at(i) = tmpPose;
-        
-        /* I think the modules should be swapped too, if all of this is being swapped
-        SMORESModulePtr tmpModule = module1;
-        module1 = module2;
-        module2 = tmpModule; */
-      }
-      std::cout<<"World: Now the first model became: "<<ModelOfCollision1<<std::endl;
+      
       physics::LinkPtr Link1, Link2;
       math::Vector3 axis;
       math::Vector3 ZDirectionOffset(0,0,0.000);  //0.008
@@ -336,14 +287,14 @@ void SMORESManager::Connect(SMORESModulePtr module1, SMORESModule::Port port1, S
         newPositionOfLink1 = ContactLinkPos.pos;
         newPositionOfLink2 = ContactLinkPos.pos - 0.0998*ContactLinkPos.rot.GetYAxis();
         newDirectionofLink1 = ContactLinkPos.rot;
-        std::cout<<"World: 'newDirectionofLink1' Z axis [ "<<newDirectionofLink1.GetZAxis().x<<", "<<newDirectionofLink1.GetZAxis().y<<", "<<newDirectionofLink1.GetZAxis().z<<"]"<<std::endl;
-        std::cout<<"World: 'newDirectionofLink1' 'Yaw' is : "<<newDirectionofLink1.GetYaw()<<std::endl;
+        //std::cout<<"World: 'newDirectionofLink1' Z axis [ "<<newDirectionofLink1.GetZAxis().x<<", "<<newDirectionofLink1.GetZAxis().y<<", "<<newDirectionofLink1.GetZAxis().z<<"]"<<std::endl;
+        //std::cout<<"World: 'newDirectionofLink1' 'Yaw' is : "<<newDirectionofLink1.GetYaw()<<std::endl;
         // std::cout<<"World: 'newDirectionofLink1' Y axis [ "<<newDirectionofLink1.GetYAxis().x<<", "<<newDirectionofLink1.GetYAxis().y<<", "<<newDirectionofLink1.GetYAxis().z<<"]"<<std::endl;
         // std::cout<<"World: 'newDirectionofLink1' 'Pitch' is : "<<newDirectionofLink1.GetPitch()<<std::endl;
         // std::cout<<"World: 'referenceQuaternion' Y axis [ "<<referenceQuaternion.GetYAxis().x<<", "<<referenceQuaternion.GetYAxis().y<<", "<<referenceQuaternion.GetYAxis().z<<"]"<<std::endl;
         // std::cout<<"World: 'referenceQuaternion' 'Pitch' is : "<<referenceQuaternion.GetPitch()<<std::endl;
-        std::cout<<"World: 'PendingRequestPos' Z axis [ "<<PendingRequestPos.at(i).rot.GetZAxis().x<<", "<<PendingRequestPos.at(i).rot.GetZAxis().y<<", "<<PendingRequestPos.at(i).rot.GetZAxis().z<<"]"<<std::endl;
-        std::cout<<"World: 'PendingRequestPos' 'Yaw' is : "<<PendingRequestPos.at(i).rot.GetYaw()<<std::endl;
+        //std::cout<<"World: 'PendingRequestPos' Z axis [ "<<PendingRequestPos.at(i).rot.GetZAxis().x<<", "<<PendingRequestPos.at(i).rot.GetZAxis().y<<", "<<PendingRequestPos.at(i).rot.GetZAxis().z<<"]"<<std::endl;
+        //std::cout<<"World: 'PendingRequestPos' 'Yaw' is : "<<PendingRequestPos.at(i).rot.GetYaw()<<std::endl;
         newZAxis = PendingRequestPos.at(i).rot.GetZAxis().Dot(newDirectionofLink1.GetZAxis())*newDirectionofLink1.GetZAxis() + PendingRequestPos.at(i).rot.GetZAxis().Dot(newDirectionofLink1.GetXAxis())*newDirectionofLink1.GetXAxis();
         newZAxis = newZAxis.Normalize();
         AngleBetweenZAxes = acos(newZAxis.Dot(newDirectionofLink1.GetZAxis()));
@@ -585,14 +536,18 @@ void SMORESManager::Connect(SMORESModulePtr module1, SMORESModule::Port port1, S
       Link1 = module1->GetPortLink(port1);
       Link2 = module2->GetPortLink(port2);      
       
+      math::Pose destinationLink1 = math::Pose(newPositionOfLink1,newDirectionofLink1);
+      destinationLink1.Correct();
+      math::Pose destinationLink2 = math::Pose(newPositionOfLink2,newDirectionofLink2);
+      destinationLink2.Correct();
       
       std::cout << "Current Pose for link1[" << module1->GetPortLink(port1)->GetWorldPose() << "]" << std::endl;
-      std::cout << "Destination Pose link1[" << math::Pose(newPositionOfLink1,newDirectionofLink1) << "]" << std::endl;
+      std::cout << "Destination Pose link1[" << destinationLink1 << "]" << std::endl;
       std::cout << "Current Pose for link2[" << module2->GetPortLink(port2)->GetWorldPose() << "]" << std::endl;
-      std::cout << "Destination Pose link2[" << math::Pose(newPositionOfLink2,newDirectionofLink2) << "]" << std::endl;
+      std::cout << "Destination Pose link2[" << destinationLink2 << "]" << std::endl;
       
-      module1->SetLinkPose(math::Pose(newPositionOfLink1,newDirectionofLink1),Link1);
-      module2->SetLinkPose(math::Pose(newPositionOfLink2,newDirectionofLink2),Link2);
+      module1->SetLinkPose(destinationLink1,Link1);
+      module2->SetLinkPose(destinationLink2,Link2);
 
 
       math::Pose newLink1PosReq = module1->frontWheelLink->GetWorldPose();
@@ -667,7 +622,7 @@ void SMORESManager::Connect(SMORESModulePtr module1, SMORESModule::Port port1, S
       // +++++  Testing Script ++++++++++++++++++++++
       for (unsigned int m = 0; m < existConnectionGroups.size(); ++m)
       {
-        std::cout<<"Wprld: One of the connected groups is: "<<existConnectionGroups.at(m)<<std::endl;
+        std::cout<<"World: One of the connected groups is: "<<existConnectionGroups.at(m)<<std::endl;
       }
       // ++++++++++++++++++++++++++++++++++++++++++++
       // std::cout<<"World: Connection between models: "
@@ -723,7 +678,7 @@ void SMORESManager::Connect(SMORESModulePtr module1, SMORESModule::Port port1, S
       // Check the distance between the center of the two models
       math::Vector3 CenterModel1 = module1->GetPose().pos;
       math::Vector3 CenterModel2 = module2->GetPose().pos;
-      std::cout<<"World: Distance between centers: "<<(CenterModel1-CenterModel2).GetLength()<<std::endl;
+      //std::cout<<"World: Distance between centers: "<<(CenterModel1-CenterModel2).GetLength()<<std::endl;
       if((CenterModel1-CenterModel2).GetLength()<VALIDCONNECTIONDISUPPER && (CenterModel1-CenterModel2).GetLength()>VALIDCONNECTIONDISLOWER)
       {
       //

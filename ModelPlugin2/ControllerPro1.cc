@@ -187,26 +187,20 @@ namespace gazebo
 								 (SMORES::SMORESManager::Instance()->GetModuleByName(coll1ModelName)) &&
 								 (SMORES::SMORESManager::Instance()->GetModuleByName(coll2ModelName)) )
 						{
-							cout << coll1ModelName << " collided with " << coll2ModelName << "(this is [" << this->scopedPrefix << "])" << endl;
+							//cout << coll1ModelName << " collided with " << coll2ModelName << "(this is [" << this->scopedPrefix << "])" << endl;
 							
 							SMORES::SMORESModulePtr module1 = SMORES::SMORESManager::Instance()->GetModuleByName(coll1ModelName);
-							cout << "module1[" << module1->GetName() << "]" << endl;
-							cout << msg->contact(i).collision1() << endl;
-							cout << SMORES::util::GetLastScope(msg->contact(i).collision1()) << endl;
 							SMORES::SMORESModule::Port port1 = static_cast<SMORES::SMORESModule::Port>(
 								SMORES::SMORESModule::ConvertPort(SMORES::util::GetLastScope(msg->contact(i).collision1())));
 						
 							SMORES::SMORESModulePtr module2 = SMORES::SMORESManager::Instance()->GetModuleByName(coll2ModelName);
-							cout << "module2[" << module2->GetName() << "]" << endl;
-							cout << msg->contact(i).collision2() << endl;
-							cout << SMORES::util::GetLastScope(msg->contact(i).collision2()) << endl;
 							SMORES::SMORESModule::Port port2 = static_cast<SMORES::SMORESModule::Port>(
 								SMORES::SMORESModule::ConvertPort(SMORES::util::GetLastScope(msg->contact(i).collision2())));
 							
 							// Only do the connection if the modules actually collided at ports!
 							if (port1 <= SMORES::SMORESModule::PORT_COUNT && port2 <= SMORES::SMORESModule::PORT_COUNT)
 							{
-								cout << "Sending off connection between[" << module1->GetName() << "::" << SMORES::PortCollisionNames[port1] << "] and [" << module2->GetName() << "::" << SMORES::PortCollisionNames[port2] << "]" << endl;
+								//cout << "Sending off connection between[" << module1->GetName() << "::" << SMORES::PortCollisionNames[port1] << "] and [" << module2->GetName() << "::" << SMORES::PortCollisionNames[port2] << "]" << endl;
 								SMORES::SMORESManager::Connect(module1,port1,module2,port2);
 								break; // This mirrors the behavior of the old connecting code, but I don't think it makes sense
 							}
