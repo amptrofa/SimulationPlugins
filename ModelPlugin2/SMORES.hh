@@ -9,6 +9,11 @@
 #include "gazebo/common/common.hh"
 #include "gazebo/gazebo.hh"
 #include "gazebo/physics/physics.hh"
+
+#define PI 3.141593
+#define VALIDCONNECTIONDISUPPER 0.110
+#define VALIDCONNECTIONDISLOWER 0.0910
+
 namespace gazebo
 {
   namespace SMORES
@@ -63,13 +68,20 @@ namespace gazebo
       /// \brief Get the module name
       public: const std::string &GetName();
       
+      /// \brief Set the module's parent model
+      /// \param[in] model The model to set as the parent
+      public: void SetParentModel(physics::ModelPtr model);
+      
+      /// \brief Get the module's parent model
+      public: physics::ModelPtr GetParentModel();
+      
       /// \brief Set the links of this module
       /// \param[in] circuitHolder The circuit holder link
       /// \param[in] uHolderBody The u-shaped holder link
       /// \param[in] frontWheel The front wheel link
       /// \param[in] leftWheel The left wheel link
       /// \param[in] rightWheel The right wheel link
-      public: void SetLinks(sdf::ElementPtr circuitHolder, sdf::ElementPtr uHolderBody, sdf::ElementPtr frontWheel, sdf::ElementPtr leftWheel, sdf::ElementPtr rightWheel);
+      public: void SetLinks(physics::LinkPtr circuitHolder, physics::LinkPtr uHolderBody, physics::LinkPtr frontWheel, physics::LinkPtr leftWheel, physics::LinkPtr rightWheel);
       
       /// \brief Set the joints of this module
       /// \param[in] right The joint connecting the right wheel
@@ -82,6 +94,10 @@ namespace gazebo
       /// \param[in] str A string containing the contact name
       public: static Port ConvertPort(const std::string &str);
       
+      /// \brief Get the link corresponding to a specific port
+      /// \param[in] port The SMORESModule::Port to get the link of
+      public: physics::LinkPtr GetPortLink(SMORESModule::Port port);
+      
       /// \brief Get the module pose
       public: math::Pose GetPose();
       
@@ -89,13 +105,20 @@ namespace gazebo
       /// \param[in] poseTo Pose to move the module to
       public: void SetPose(math::Pose poseTo);
       
-      private: std::string name;
+      /// \brief Set this module's pose by specifying the pose of one of its links
+      /// \param[in] poseTo Pose to move the link to
+      /// \param[in] specifiedLink The link which the pose is being specified for
+      public: void SetLinkPose(math::Pose poseTo, const physics::LinkPtr specifiedLink);
       
-      private: sdf::ElementPtr circuitHolderLink;
-      private: sdf::ElementPtr uHolderBodyLink;
-      private: sdf::ElementPtr frontWheelLink;
-      private: sdf::ElementPtr leftWheelLink;
-      private: sdf::ElementPtr rightWheelLink;
+      private: std::string name;
+      private: physics::ModelPtr parentModel;
+      
+      //TODO: The links should be put into a list, insteady of having pointers. Enums will be needed to create a quick way to grab the proper link based off of name. The same should be done for the joints
+      public: physics::LinkPtr circuitHolderLink;
+      public: physics::LinkPtr uHolderBodyLink;
+      public: physics::LinkPtr frontWheelLink;
+      public: physics::LinkPtr leftWheelLink;
+      public: physics::LinkPtr rightWheelLink;
       
       private: physics::JointPtr rightWheelHinge;
       private: physics::JointPtr leftWheelHinge;
@@ -139,16 +162,31 @@ namespace gazebo
       /// \param[in] moduleConnecting Module to connect this module to
       /// \param[in] connectingModulePort Port of the module this one is being connected to to connect
       public: static void Connect(SMORESModulePtr module1, SMORESModule::Port port1, SMORESModulePtr module2, SMORESModule::Port port2);
+      //TODO: I would prefer that this be a method of SMORESModule, but I can't find a way to use SMORESModulePtr within the class definition. The compiler thinks it's an 'int'
       
       /// \brief Disconnect this module from another module
-      /// \param[in] disconnectPort Port of this module to disconnect
       /// TODO: disconnection is not yet supported
-      public: static void Disconnect(SMORESModule::Port disconnectPort);
-
+      public: static void Disconnect();
+      //TODO: this is here because it seems like it should follow Connect.
+      
       private: std::vector<SMORESModulePtr> modules;
 
       // Singleton implementation
       private: friend class SingletonT<SMORESManager>;
+      
+      // Connection implementation
+      // The vectors that store the pending connection request and information
+      public: std::vector<std::string> namesOfPendingRequest;
+      public: std::vector<math::Pose> PendingRequestPos;
+      // The vector that stores the real connection
+      public: std::vector<std::string> existConnections;
+      // The vector that stores name of the models that all connect togather
+      public: std::vector<std::string> existConnectionGroups;
+      // The vector for connection record
+      public: std::vector<physics::JointPtr> DynamicConnections;
+      // The vector that stores the connected pair of models
+      public: std::vector<std::string> existConnectedPair;
+
     };
     
   }

@@ -80,13 +80,12 @@ namespace gazebo
 					cout << _sdf->GetNextElement()->GetNextElement()->GetNextElement()->GetNextElement()->Get<string>("name") << endl;
 					cout << _sdf->GetNextElement()->GetNextElement()->GetNextElement()->GetNextElement()->GetNextElement()->Get<string>("name") << endl;
 					*/
-					
-					// SMORES module management
-					CreateSMORESModule(_sdf);
 														
 					// Initialize the whole system
 					SystemInitialization(_parent);
-										
+					// SMORES module management
+					CreateSMORESModule(_parent);					
+
 					// ************************************************************************************
 					//gazebo::transport::NodePtr node(new gazebo::transport::Node());
 					//node->Init();
@@ -188,8 +187,8 @@ namespace gazebo
 								 (SMORES::SMORESManager::Instance()->GetModuleByName(coll1ModelName)) &&
 								 (SMORES::SMORESManager::Instance()->GetModuleByName(coll2ModelName)) )
 						{
-							cout << coll1ModelName << " collided with " << coll2ModelName << "(this is [" << this->scopedPrefix << "])" << endl;
-
+							//cout << coll1ModelName << " collided with " << coll2ModelName << "(this is [" << this->scopedPrefix << "])" << endl;
+							
 							SMORES::SMORESModulePtr module1 = SMORES::SMORESManager::Instance()->GetModuleByName(coll1ModelName);
 							SMORES::SMORESModule::Port port1 = static_cast<SMORES::SMORESModule::Port>(
 								SMORES::SMORESModule::ConvertPort(SMORES::util::GetLastScope(msg->contact(i).collision1())));
@@ -199,6 +198,7 @@ namespace gazebo
 								SMORES::SMORESModule::ConvertPort(SMORES::util::GetLastScope(msg->contact(i).collision2())));
 							
 							SMORES::SMORESManager::Connect(module1,port1,module2,port2);
+							break; // This mirrors the behavior of the old connecting code, but I don't think it makes sense
 						}
 					}
 				}
@@ -353,6 +353,7 @@ namespace gazebo
 		// Need to be virtual in the furture
 		public: math::Pose GetModelCentralCoor(void)
 				{
+					/*
 					math::Pose smorePose_in0;					
 					
 					math::Pose LinkPose_in0 = model->GetLink(this->withinModelPrefix + "CircuitHolder")->GetWorldPose();
@@ -361,7 +362,8 @@ namespace gazebo
 					math::Pose smorePose_inLink = -LinkPose_inSMORE; // Transformation from link to SMORE
 					
 					smorePose_in0 = LinkPose_in0 + smorePose_inLink;
-					return smorePose_in0;
+					return smorePose_in0; */
+					return this->module->GetPose();
 				}
 		// This function is an old version function of RevolutionSpeedCal()
 		// Which has the same functionality as RevolutionSpeedCal()
@@ -498,19 +500,19 @@ namespace gazebo
 				}
 			
 		// Create a SMORESModule for the module this plugin controls and add it to the SMORESManager	
-		private: void CreateSMORESModule(sdf::ElementPtr sdf)
+		private: void CreateSMORESModule(physics::ModelPtr parent)
 		{
 			this->module = SMORES::SMORESModulePtr(new SMORES::SMORESModule);
 			
 			this->module->SetName(this->scopedPrefix.substr(0,this->scopedPrefix.length()-2));
-			
+			this->module->SetParentModel(this->model);
 			{
 			// Add the links
-			sdf::ElementPtr circuitHolder = sdf->GetNextElement();
-			sdf::ElementPtr uHolderBody = circuitHolder->GetNextElement();
-			sdf::ElementPtr frontWheel = uHolderBody->GetNextElement();
-			sdf::ElementPtr leftWheel = frontWheel->GetNextElement();
-			sdf::ElementPtr rightWheel = leftWheel->GetNextElement();
+			physics::LinkPtr circuitHolder = this->model->GetLink(this->withinModelPrefix + "CircuitHolder");
+			physics::LinkPtr uHolderBody = this->model->GetLink(this->withinModelPrefix + "UHolderBody");
+			physics::LinkPtr frontWheel = this->model->GetLink(this->withinModelPrefix + "FrontWheel");
+			physics::LinkPtr leftWheel = this->model->GetLink(this->withinModelPrefix + "LeftWheel");
+			physics::LinkPtr rightWheel = this->model->GetLink(this->withinModelPrefix + "RightWheel");
 			
 			this->module->SetLinks(circuitHolder, uHolderBody, frontWheel, leftWheel, rightWheel);
 			}
