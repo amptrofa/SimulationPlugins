@@ -5,7 +5,7 @@
 #include <iostream>
 #include <cmath>
 
-#include "collision_message_plus.pb.h"
+#include "SMORES.hh"
 using namespace std;
 
 #define PI 3.1415926 
@@ -52,13 +52,45 @@ namespace gazebo
 				}
 		public: void Load (physics::ModelPtr _parent, sdf::ElementPtr _sdf)
 				{
+					string modelName = _parent->GetName();
+					
+					string nextElementName = _sdf->GetNextElement()->Get<string>("name");
+					// Remove the name of the next element to get its scope within the model
+					unsigned lastScope = nextElementName.rfind("::");
+					if (lastScope == string::npos)
+					{	// string "::" was not actually found in nextElementName
+						this->withinModelPrefix = "";
+						this->scopedPrefix = modelName + "::";
+					} else {
+						this->withinModelPrefix = nextElementName.substr(0,lastScope) + "::";
+						this->scopedPrefix = modelName + "::" + this->withinModelPrefix;
+					}
+					
+					/* Debugging output
+					cout << "nextElementName[" << nextElementName << "]" << endl;
+					cout << "withinModelPrefix[" << this->withinModelPrefix << "]" << endl;
+					cout << "scopedPrefix[" << this->scopedPrefix << "]" << endl;
+					/**/
+					
+					/* testing next elements
+					cout << "Next 5 elements:" << endl;
+					cout << _sdf->GetNextElement()->Get<string>("name") << endl;
+					cout << _sdf->GetNextElement()->GetNextElement()->Get<string>("name") << endl;
+					cout << _sdf->GetNextElement()->GetNextElement()->GetNextElement()->Get<string>("name") << endl;
+					cout << _sdf->GetNextElement()->GetNextElement()->GetNextElement()->GetNextElement()->Get<string>("name") << endl;
+					cout << _sdf->GetNextElement()->GetNextElement()->GetNextElement()->GetNextElement()->GetNextElement()->Get<string>("name") << endl;
+					*/
+														
 					// Initialize the whole system
 					SystemInitialization(_parent);
+					// SMORES module management
+					CreateSMORESModule(_parent);					
+
 					// ************************************************************************************
-					gazebo::transport::NodePtr node(new gazebo::transport::Node());
-  					node->Init();
-  					this->sub = node->Subscribe("~/Welcome",&ModelController::welcomInfoProcessor, this);
-  					// commandSubscriber = node->Subscribe("~/collision_map/command", &CollisionMapCreator::create, this);
+					//gazebo::transport::NodePtr node(new gazebo::transport::Node());
+					//node->Init();
+					//this->sub = node->Subscribe("~/Welcome",&ModelController::welcomInfoProcessor, this);
+					// commandSubscriber = node->Subscribe("~/collision_map/command", &CollisionMapCreator::create, this);
 					//***************************************************************************************
 					// Testing codes
 					this->JointWR->SetVelocity(0,0);
@@ -69,35 +101,14 @@ namespace gazebo
 					this->updateConnection = event::Events::ConnectWorldUpdateBegin(boost::bind(&ModelController::OnSystemRunning, this, _1));
 				}
 				//########################################################
-		public: void welcomInfoProcessor(GzStringPtr &msg)
-				{
-					cout<<"Message Recieved"<<endl;
-					cout<<"Message: "<<msg->data()<<endl;
-					string InfoReceived = msg->data();
-					if(InfoReceived.find('3') != string::npos)
-					{
-						Driving2Angle.SetFromRadian(2.3561945);
-						Driving2Point.Set(1,1);
-						Location.Set(0.929,0.929,0.05);
-						Rotmat.SetFromAxis(0,0,1,2.3561945);
-
-						math::Angle AngleInterested(0.5235987);
-						this->JointWF->SetAngle(0,AngleInterested);
-
-						Need2BeSet = 0;
-
-						isModel3  = 1;
-					}
-				}
-				//########################################################
 		private: void SystemInitialization(physics::ModelPtr parentModel)
 				{
 					// Get all the pointers point to right objects
 					this->model = parentModel;
-					this->JointWR = model->GetJoint("Right_wheel_hinge");
-					this->JointWL = model->GetJoint("Left_wheel_hinge");
-					this->JointWF = model->GetJoint("Front_wheel_hinge");
-					this->JointCB = model->GetJoint("Center_hinge");
+					this->JointWR = model->GetJoint(this->withinModelPrefix + "Right_wheel_hinge");
+					this->JointWL = model->GetJoint(this->withinModelPrefix + "Left_wheel_hinge");
+					this->JointWF = model->GetJoint(this->withinModelPrefix + "Front_wheel_hinge");
+					this->JointCB = model->GetJoint(this->withinModelPrefix + "Center_hinge");
 					JointWRP.JointX = JointWR;
 					JointWRP.Need2BeSet = false;
 					JointWRP.JointErrorHis = 0;
@@ -134,58 +145,67 @@ namespace gazebo
 					// TopicName += CurrentModelState.GetName();
 					// TopicName += "_world";
 					// gazebo::transport::NodePtr node(new gazebo::transport::Node());
-  			// 		node->Init();
-  			// 		this->PositionSub = node->Subscribe(TopicName,&ModelController::PositionDecoding, this);
-					CollisionPubAndSubInitialization();
+					// 		node->Init();
+					// 		this->PositionSub = node->Subscribe(TopicName,&ModelController::PositionDecoding, this);
+					CollisionSubInitialization();
 				}
-		private: void CollisionPubAndSubInitialization(void)
+		private: void CollisionSubInitialization(void)
 				{
 					gazebo::transport::NodePtr node1(new gazebo::transport::Node());
-					// Initialize the node with the model name
-					node1->Init(model->GetName());
-					cout<<"Mode: node name is '"<<model->GetName()<<"'"<<endl;
-					string TopicName = "~/" + model->GetName() + "::FrontWheel::front_contact";
-					cout<<"Mode: node topic is '"<<TopicName<<"'"<<endl;
+
+					node1->Init();
+					string topicPrefix = SMORES::util::ColonToSlash(this->scopedPrefix);
+					
+					//cout<<"Mode: node name is '"<< this->scopedPrefix.substr(0,this->scopedPrefix.length()-2) <<"'"<<endl;
+					string TopicName = "~/" + topicPrefix + "FrontWheel/front_contact";
+					//cout<<"Mode: contact topic is '"<<TopicName<<"'"<<endl;
 					this->LinkCollisonSub[0] = node1->Subscribe(TopicName,&ModelController::CollisionReceiverProcessor,this);
-					TopicName = "~/" + model->GetName() + "::UHolderBody::UHolder_contact";
-					cout<<"Mode: node topic is '"<<TopicName<<"'"<<endl;
+					
+					TopicName = "~/" + topicPrefix + "UHolderBody/UHolder_contact";
+					//cout<<"Mode: contact topic is '"<<TopicName<<"'"<<endl;
 					this->LinkCollisonSub[1] = node1->Subscribe(TopicName,&ModelController::CollisionReceiverProcessor,this);
-					TopicName = "~/" + model->GetName() + "::LeftWheel::LeftWheel_contact";
+					
+					TopicName = "~/" + topicPrefix + "LeftWheel/LeftWheel_contact";
+					//cout<<"Mode: contact topic is '"<<TopicName<<"'"<<endl;
 					this->LinkCollisonSub[2] = node1->Subscribe(TopicName,&ModelController::CollisionReceiverProcessor,this);
-					TopicName = "~/" + model->GetName() + "::RightWheel::RightWheel_contact";
+					
+					TopicName = "~/" + topicPrefix + "RightWheel/RightWheel_contact";
+					//cout<<"Mode: contact topic is '"<<TopicName<<"'"<<endl;
 					this->LinkCollisonSub[3] = node1->Subscribe(TopicName,&ModelController::CollisionReceiverProcessor,this);
-
-					string ColPubName = "~/"+model->GetName()+"_Collision";
-					CollisionInfoToServer = node1->Advertise<collision_message_plus::msgs::CollisionMessage>(ColPubName);
 				}
-		private: void CollisionReceiverProcessor(GzStringPtr &msg)
+		private: void CollisionReceiverProcessor(ConstContactsPtr &msg)
 				{
-					// cout<<"Message: "<<msg->data()<<endl;
-					string MsgsInfo = msg->data();
-					string Collison1 = MsgsInfo.substr(0,MsgsInfo.find(","));
-					string Collison2 = MsgsInfo.substr(MsgsInfo.find(",")+1,-1);
-					// cout<<"Model: Collision 1: "<<Collison1<<endl;
-					// cout<<"Model: Collision 2: "<<Collison2<<endl;
-					collision_message_plus::msgs::CollisionMessage CollisionMsgsPush;
-
-					string LinkName;
-					// cout<<"Model: Information came from model: "<<model->GetName()<<endl;
-					if(Collison1.substr(0,Collison1.find("::")).compare(model->GetName())==0)
+					// Loop through all contacts, only process contacts that are not with the ground plane
+					for (int i = 0; i < msg->contact_size(); ++i)
 					{
-						// cout<<"Model: Collision 1 position "
-						CollisionMsgsPush.set_collision1(Collison1);
-						CollisionMsgsPush.set_collision2(Collison2);
-						LinkName = Collison1.substr((model->GetName()).length()+2,Collison1.find(":",(model->GetName()).length()+2)-2-(model->GetName()).length());
-					}else{
-						CollisionMsgsPush.set_collision1(Collison2);
-						CollisionMsgsPush.set_collision2(Collison1);
-						LinkName = Collison2.substr((model->GetName()).length()+2,Collison2.find(":",(model->GetName()).length()+2)-2-(model->GetName()).length());
+						string coll1ModelName = SMORES::util::StripLastScope(SMORES::util::StripLastScope(msg->contact(i).collision1()));
+						string coll2ModelName = SMORES::util::StripLastScope(SMORES::util::StripLastScope(msg->contact(i).collision2()));
+						
+						// short circuit will prevent us from searching for SMORES module most of the time
+						if ( (coll1ModelName.find("ground_plane") == string::npos) &&
+								 (coll2ModelName.find("ground_plane") == string::npos) && 
+								 (SMORES::SMORESManager::Instance()->GetModuleByName(coll1ModelName)) &&
+								 (SMORES::SMORESManager::Instance()->GetModuleByName(coll2ModelName)) )
+						{
+							//cout << coll1ModelName << " collided with " << coll2ModelName << "(this is [" << this->scopedPrefix << "])" << endl;
+							
+							SMORES::SMORESModulePtr module1 = SMORES::SMORESManager::Instance()->GetModuleByName(coll1ModelName);
+							SMORES::SMORESModule::Port port1 = static_cast<SMORES::SMORESModule::Port>(
+								SMORES::SMORESModule::ConvertPort(SMORES::util::GetLastScope(msg->contact(i).collision1())));
+						
+							SMORES::SMORESModulePtr module2 = SMORES::SMORESManager::Instance()->GetModuleByName(coll2ModelName);
+							SMORES::SMORESModule::Port port2 = static_cast<SMORES::SMORESModule::Port>(
+								SMORES::SMORESModule::ConvertPort(SMORES::util::GetLastScope(msg->contact(i).collision2())));
+							
+							// Only do the connection if the modules actually collided at ports!
+							if (port1 <= SMORES::SMORESModule::PORT_COUNT && port2 <= SMORES::SMORESModule::PORT_COUNT)
+							{
+								//cout << "Sending off connection between[" << module1->GetName() << "::" << SMORES::PortCollisionNames[port1] << "] and [" << module2->GetName() << "::" << SMORES::PortCollisionNames[port2] << "]" << endl;
+								SMORES::SMORESManager::Connect(module1,port1,module2,port2);
+								break; // This mirrors the behavior of the old connecting code, but I don't think it makes sense
+							}
+						}
 					}
-					// cout<<"Model: The collision link name is :"<<LinkName<<endl;
-					msgs::Pose PositionOfCollisionLink = msgs::Convert(model->GetLink(LinkName)->GetWorldPose());
-					CollisionMsgsPush.mutable_positioncol1()->CopyFrom(PositionOfCollisionLink);
-
-					CollisionInfoToServer->Publish(CollisionMsgsPush);
 				}
 		// Position Command Decoding Function
 		private: void PositionDecoding(PosePtr &msg)
@@ -338,10 +358,17 @@ namespace gazebo
 		// Need to be virtual in the furture
 		public: math::Pose GetModelCentralCoor(void)
 				{
-					math::Pose ModelPosition;
-					physics::ModelState CurrentModelState(model);
-					ModelPosition = CurrentModelState.GetPose();
-					return ModelPosition;
+					/*
+					math::Pose smorePose_in0;					
+					
+					math::Pose LinkPose_in0 = model->GetLink(this->withinModelPrefix + "CircuitHolder")->GetWorldPose();
+					
+					math::Pose LinkPose_inSMORE = math::Pose(0.0, 0.0, 0.05, 0.0, 0.0, 0.0); // Transformation from SMORE to link
+					math::Pose smorePose_inLink = -LinkPose_inSMORE; // Transformation from link to SMORE
+					
+					smorePose_in0 = LinkPose_in0 + smorePose_inLink;
+					return smorePose_in0; */
+					return this->module->GetPose();
 				}
 		// This function is an old version function of RevolutionSpeedCal()
 		// Which has the same functionality as RevolutionSpeedCal()
@@ -476,9 +503,36 @@ namespace gazebo
 
 					return FiltedValue;
 				}
-
+			
+		// Create a SMORESModule for the module this plugin controls and add it to the SMORESManager	
+		private: void CreateSMORESModule(physics::ModelPtr parent)
+		{
+			this->module = SMORES::SMORESModulePtr(new SMORES::SMORESModule);
+			
+			this->module->SetName(this->scopedPrefix.substr(0,this->scopedPrefix.length()-2));
+			this->module->SetParentModel(this->model);
+			{
+			// Add the links
+			physics::LinkPtr circuitHolder = this->model->GetLink(this->withinModelPrefix + "CircuitHolder");
+			physics::LinkPtr uHolderBody = this->model->GetLink(this->withinModelPrefix + "UHolderBody");
+			physics::LinkPtr frontWheel = this->model->GetLink(this->withinModelPrefix + "FrontWheel");
+			physics::LinkPtr leftWheel = this->model->GetLink(this->withinModelPrefix + "LeftWheel");
+			physics::LinkPtr rightWheel = this->model->GetLink(this->withinModelPrefix + "RightWheel");
+			
+			this->module->SetLinks(circuitHolder, uHolderBody, frontWheel, leftWheel, rightWheel);
+			}
+						
+			this->module->SetJoints(this->JointWR, this->JointWL, this->JointWF, this->JointCB);
+			
+			SMORES::SMORESManager::Instance()->AddModule(this->module);
+		}
+		
+		private: SMORES::SMORESModulePtr module;
+		
 		// Current Model Pointer
 		private: physics::ModelPtr model;
+		private: string scopedPrefix;
+		private: string withinModelPrefix;
 		// Pointers to all the Joints the current model has
 		private: physics::JointPtr JointWR;
 		private: physics::JointPtr JointWL;
@@ -499,7 +553,7 @@ namespace gazebo
 		public:  double AccelerationRate;
 		public:  double PlanarMotionStopThreshold;
 
-		private: transport::SubscriberPtr sub;
+		//private: transport::SubscriberPtr sub;
 		private: transport::SubscriberPtr PositionSub;
 		private: transport::SubscriberPtr LinkCollisonSub[4];
 		private: transport::PublisherPtr CollisionInfoToServer;
@@ -513,7 +567,6 @@ namespace gazebo
 		private: int Need2BeSet;
 		private: physics::JointPtr DynamicJoint;
 		private: int isModel3;
-
 		//####################################################################
 	};
 
