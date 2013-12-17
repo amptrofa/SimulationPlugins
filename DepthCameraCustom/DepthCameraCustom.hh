@@ -20,15 +20,15 @@
 
 #include <string>
 
-#include "common/Plugin.hh"
-#include "sensors/DepthCameraSensor.hh"
-#include "sensors/CameraSensor.hh"
-#include "rendering/DepthCamera.hh"
-#include "physics/physics.hh"
-#include "gazebo.hh"
+#include "gazebo/common/Plugin.hh"
+#include "gazebo/sensors/DepthCameraSensor.hh"
+#include "gazebo/sensors/CameraSensor.hh"
+#include "gazebo/rendering/DepthCamera.hh"
+#include "gazebo/physics/physics.hh"
+#include "gazebo/gazebo.hh"
 
-#include "transport/transport.hh"
-#include "msgs/msgs.hh"
+#include "gazebo/transport/transport.hh"
+#include "gazebo/msgs/msgs.hh"
 #include "boost/algorithm/string/replace.hpp"
 
 namespace gazebo
