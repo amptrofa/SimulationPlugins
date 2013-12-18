@@ -95,7 +95,8 @@ void DepthCameraPlugin::OnNewDepthFrame(const float *_image,
   //int index =  ((_height * 0.5) * _width) + _width * 0.5;
   //printf("W[%d] H[%d] MidPoint[%d] Dist[%f] Min[%f] Max[%f]\n",
   //    width, height, index, _image[index], min, max);
-
+  
+  /* Debugging output
   // Convert float _image to char charImg
   unsigned char * charImg;
   charImg = (unsigned char*) malloc (_width*_height);
@@ -107,7 +108,7 @@ void DepthCameraPlugin::OnNewDepthFrame(const float *_image,
   rendering::Camera::SaveFrame(charImg, _width,
    _height, _depth, std::string("L8"), std::string("/tmp/depthCamera/sample.jpg"));
   //TODO: File must exist, or the program crashes. Need to fix.
-  free (charImg);
+  free (charImg);*/
 
   unsigned int float_depth = sizeof(_image[0]);
   // Construct the ImageStamped message and publish it
